@@ -2,6 +2,7 @@ import java.util.AbstractList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.ConcurrentModificationException;
+import java.util.Comparator;
 
 public class CSLinkedList<E> extends AbstractList<E> {
 
@@ -105,7 +106,123 @@ public class CSLinkedList<E> extends AbstractList<E> {
     return -1;
   }
 
-  @Override
+    // LL3 – add only if item is not already present
+    public boolean addIfAbsent(E item) {
+        if (indexOf(item) != -1) {
+            return false; // already there
+        }
+        add(item); // use existing add(E e)
+        return true;
+    }
+
+    // LL5 – move an existing item to the front (index 0)
+    public void moveToFront(E item) {
+        if (size == 0) return;
+
+        Node<E> prev = head;
+        Node<E> cur = head.next;
+
+        while (cur != null) {
+            if (item == null ? cur.data == null : item.equals(cur.data)) {
+                // Already at front
+                if (prev == head) return;
+
+                // Unlink cur from its current position
+                prev.next = cur.next;
+                if (cur == tail) {
+                    // If we removed the tail, update it
+                    tail = (prev == head && prev.next == null) ? null : prev;
+                }
+
+                // Insert cur right after head (front of list)
+                cur.next = head.next;
+                head.next = cur;
+                if (tail == null) {
+                    tail = cur;
+                }
+
+                modCount++;
+                return;
+            }
+            prev = cur;
+            cur = cur.next;
+        }
+    }
+
+    // LL6 – insert newItem after the first occurrence of target
+    public boolean addAfter(E target, E newItem) {
+        for (Node<E> cur = head.next; cur != null; cur = cur.next) {
+            if (target == null ? cur.data == null : target.equals(cur.data)) {
+                Node<E> n = new Node<>(newItem, cur.next);
+                cur.next = n;
+                if (cur == tail) {
+                    tail = n;
+                }
+                size++;
+                modCount++;
+                return true;
+            }
+        }
+        return false; // target not found
+    }
+
+    // LL8 – insert item so that the list stays sorted according to cmp
+    public void addInOrder(E item, Comparator<E> cmp) {
+        Node<E> prev = head;
+        Node<E> cur = head.next;
+
+        while (cur != null && cmp.compare(item, cur.data) > 0) {
+            prev = cur;
+            cur = cur.next;
+        }
+
+        Node<E> n = new Node<>(item, cur);
+        prev.next = n;
+
+        if (cur == null) {
+            // inserted at the end
+            tail = n;
+        }
+        if (size == 0) {
+            tail = n;
+        }
+
+        size++;
+        modCount++;
+    }
+
+    // LL9 – remove only the first occurrence of item
+    public boolean removeFirstOccurrence(E item) {
+        Node<E> prev = head;
+        Node<E> cur = head.next;
+
+        while (cur != null) {
+            if (item == null ? cur.data == null : item.equals(cur.data)) {
+                prev.next = cur.next;
+                if (cur == tail) {
+                    tail = (prev == head && prev.next == null) ? null : prev;
+                }
+                size--;
+                modCount++;
+                return true;
+            }
+            prev = cur;
+            cur = cur.next;
+        }
+        return false;
+    }
+
+    // LL10 – copy the list into a new CSLinkedList
+    public CSLinkedList<E> copy() {
+        CSLinkedList<E> result = new CSLinkedList<>();
+        for (Node<E> cur = head.next; cur != null; cur = cur.next) {
+            result.add(cur.data);
+        }
+        return result;
+    }
+
+
+    @Override
   public void clear() {
     head.next = null;
     tail = null;
